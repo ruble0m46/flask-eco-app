@@ -18,5 +18,5 @@ def get_weather():
     res = requests.get(url)
     return jsonify(res.json())
 
-if __name__ == '__main__'
+if __name__ == '__main__':
     app.run(debug=True)
