@@ -2,12 +2,15 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>실시간 날씨 확인</title>
+    <title>🌤️ 실시간 날씨 확인</title>
+    <link rel="stylesheet" href="/static/style.css">
     <script src="/static/script.js" defer></script>
 </head>
 <body>
-    <h1>🌤️ 실시간 날씨 확인</h1>
-    <button onclick="getLocation()">현재 위치 날씨 보기</button>
-    <div id="weather-result"></div>
+    <div class="container">
+        <h1>🌤️ 실시간 날씨 확인</h1>
+        <button onclick="getLocation()">📍 내 위치 날씨 보기</button>
+        <div id="weather-result" class="card">날씨 정보를 불러오려면 버튼을 누르세요.</div>
+    </div>
 </body>
 </html>
