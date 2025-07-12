@@ -6,11 +6,11 @@ app = Flask(__name__)
 API_KEY = 'f8af007bb8d199bd6612f11a4fc70e6b' 
 
 @app.route('')
-def home()
+def home():
     return render_template('index.html')
 
 @app.route('get_weather', methods=['POST'])
-def get_weather()
+def get_weather():
     data = request.get_json()
     lat = data['lat']
     lon = data['lon']
