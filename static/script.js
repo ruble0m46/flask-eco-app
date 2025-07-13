@@ -242,6 +242,7 @@ function drawExampleDailySensorGraph() {
 document.addEventListener('DOMContentLoaded', function() {
     initChart();
     fetchSensorData();
+    drawExampleDailySensorGraph();
     
     // 30초마다 자동으로 센서 데이터 갱신
     setInterval(fetchSensorData, 30000);
