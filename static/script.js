@@ -229,17 +229,6 @@ async function updateDailyChart() {
     }
 }
 
-function showAnalysisAtSunset(sunsetUnix) {
-    const now = new Date();
-    const sunset = new Date(sunsetUnix * 1000);
-    const timeUntilSunset = sunset.getTime() - now.getTime();
-
-    if (timeUntilSunset > 0) {
-        setTimeout(fetchAndShowAnalysis, timeUntilSunset);
-    } else {
-        fetchAndShowAnalysis();  // 일몰 이미 지난 경우 즉시 실행
-    }
-}
 
 function fetchAndShowAnalysis() {
     const today = new Date().toISOString().split('T')[0];
