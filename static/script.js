@@ -24,12 +24,15 @@ function fetchWeather(lat, lon) {
         const feels = data.main.feels_like;
         const humidity = data.main.humidity;
         const wind = data.wind.speed;
+        const sunsetDate = new Date(sunsetUnix * 1000);
+        const sunsetStr = sunsetDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
 
         document.getElementById("weather-result").innerHTML = `
             <p>☁️ 상태: ${weather}</p>
             <p>🌡️ 온도: ${temp}°C (체감 ${feels}°C)</p>
             <p>💧 습도: ${humidity}%</p>
             <p>🌬️ 바람: ${wind} m/s</p>
+            <p>🌇 일몰: ${sunsetStr}</p>
         `;
     })
     .catch(() => {
