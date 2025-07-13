@@ -77,7 +77,6 @@ function fetchAndDisplaySunset(lat, lon) {
             const sunsetLocal = new Date(sunsetUTC.getTime() + (9 * 60 * 60 * 1000)); // KST 변환
             const sunsetStr = sunsetLocal.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
             
-            // 기존 날씨 결과 아래에 일몰 시간 추가 표시
             const existingSunset = document.getElementById('sunset-time');
             if (existingSunset) {
                 existingSunset.innerText = `🌇 일몰 시간: ${sunsetStr}`;
