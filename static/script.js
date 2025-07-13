@@ -227,7 +227,7 @@ function drawExampleDailySensorGraph() {
             plugins: {
                 title: {
                     display: true,
-                    text: '일별 조도 센서 데이터 (예시)'
+                    text: '시간별 조도 센서 데이터'
                 },
                 legend: {
                     display: true,
