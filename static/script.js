@@ -31,6 +31,7 @@ function fetchWeather(lat, lon) {
     if (sunsetUnix) {
         const sunsetDate = new Date(sunsetUnix * 1000);
         sunsetStr = sunsetDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        showAnalysisAtSunset(sunsetUnix);
     }
 
         document.getElementById("weather-result").innerHTML = `
@@ -227,6 +228,129 @@ async function updateDailyChart() {
         console.error(error);
         document.getElementById('sensor-info').innerText = '시간별 센서 데이터를 불러올 수 없습니다.';
     }
+}
+
+function showAnalysisAtSunset(sunsetUnix) {
+    const now = new Date();
+    const sunset = new Date(sunsetUnix * 1000);
+    const timeUntilSunset = sunset.getTime() - now.getTime();
+
+    if (timeUntilSunset > 0) {
+        setTimeout(fetchAndShowAnalysis, timeUntilSunset);
+    } else {
+        fetchAndShowAnalysis();  // 일몰 이미 지난 경우 즉시 실행
+    }
+}
+
+function fetchAndShowAnalysis() {
+    const today = new Date().toISOString().split('T')[0];
+    fetch(`/api/daily-sensor-data?date=${today}`)
+        .then(res => res.json())
+        .then(data => {
+            const avg1 = data.sensor1Avg;
+            const avg2 = data.sensor2Avg;
+            const avg3 = data.sensor3Avg;
+            const brightest = getBrightestSensor(avg1, avg2, avg3);
+
+            const html = `
+                <h3>📊 오늘의 센서 분석</h3>
+                <p>날짜: ${today}</p>
+                <ul>
+                    <li>센서 1 평균: ${avg1}</li>
+                    <li>센서 2 평균: ${avg2}</li>
+                    <li>센서 3 평균: ${avg3}</li>
+                    <li>🌞 가장 밝은 센서: ${brightest}</li>
+                    <li>💡 평균 조도 200 이하이면 실내 조명 권장</li>
+                </ul>
+            `;
+
+            document.getElementById("analysis-content").innerHTML = html;
+            document.getElementById("analysis-area").style.display = 'block';
+
+            drawAnalysisChart();  // 선 그래프도 함께 표시
+        })
+        .catch(err => {
+            console.error("분석 실패:", err);
+        });
+}
+
+function getBrightestSensor(s1, s2, s3) {
+    const max = Math.max(s1, s2, s3);
+    if (s1 === max) return '센서 1';
+    if (s2 === max) return '센서 2';
+    return '센서 3';
+}
+
+function hideAnalysis() {
+    document.getElementById("analysis-area").style.display = 'none';
+}
+
+// 분석 전용 선그래프 (global)
+let analysisChart = null;
+
+function drawAnalysisChart() {
+    fetch('/api/sensor-history')
+        .then(res => res.json())
+        .then(data => {
+            const labels = data.map(d => {
+                const dt = new Date(d.timestamp);
+                return dt.getHours().toString().padStart(2, '0') + ':' + dt.getMinutes().toString().padStart(2, '0');
+            });
+            const s1 = data.map(d => d.sensor1);
+            const s2 = data.map(d => d.sensor2);
+            const s3 = data.map(d => d.sensor3);
+
+            const ctx = document.getElementById('analysisChart').getContext('2d');
+
+            if (analysisChart) {
+                analysisChart.destroy();
+            }
+
+            analysisChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '센서 1',
+                            data: s1,
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            tension: 0.3
+                        },
+                        {
+                            label: '센서 2',
+                            data: s2,
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            tension: 0.3
+                        },
+                        {
+                            label: '센서 3',
+                            data: s3,
+                            borderColor: 'rgba(255, 206, 86, 1)',
+                            backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '시간별 센서 조도 그래프'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1023
+                        }
+                    }
+                }
+            });
+        });
 }
 
 // 초기화 및 반복 갱신
