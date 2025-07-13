@@ -24,7 +24,7 @@ function fetchWeather(lat, lon) {
         const feels = data.main.feels_like;
         const humidity = data.main.humidity;
         const wind = data.wind.speed;
-       const sunsetUnix = data.sys?.sunset;  
+        const sunsetUnix = data.sys?.sunset;  
     let sunsetStr = '정보 없음';
     
 
