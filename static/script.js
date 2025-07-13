@@ -29,6 +29,38 @@ function fetchWeather(lat, lon) {
             <p>🌡️ 온도: ${temp}°C (체감 ${feels}°C)</p>
             <p>💧 습도: ${humidity}%</p>
             <p>🌬️ 바람: ${wind} m/s</p>
+            <p>🌬️ 일몰() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(sendCoordinates, showError);
+    } else {
+        showError({ message: "이 브라우저는 위치 서비스를 지원하지 않습니다." });
+    }
+}
+
+function sendCoordinates(position) {
+    fetchWeather(position.coords.latitude, position.coords.longitude);
+}
+
+function fetchWeather(lat, lon) {
+    fetch('/get_weather', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat: lat, lon: lon })
+    })
+    .then(res => res.json())
+    .then(data => {
+        const weather = data.weather[0].description;
+        const temp = data.main.temp;
+        const feels = data.main.feels_like;
+        const humidity = data.main.humidity;
+        const wind = data.wind.speed;
+
+        document.getElementById("weather-result").innerHTML = `
+            <p>☁️ 상태: ${weather}</p>
+            <p>🌡️ 온도: ${temp}°C (체감 ${feels}°C)</p>
+            <p>💧 습도: ${humidity}%</p>
+            <p>🌬️ 바람: ${wind} m/s</p>
+            <p>🌇 일몰: ${sunsetStr}</p>
         `;
     })
     .catch(() => {
