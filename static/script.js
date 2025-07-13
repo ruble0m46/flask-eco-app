@@ -358,7 +358,9 @@ document.addEventListener('DOMContentLoaded', function () {
     initChart();
     fetchSensorData();
     updateDailyChart();
+    updateAnalysisChart();
 
     setInterval(fetchSensorData, 30000);  // 30초마다 실시간 데이터 갱신
     setInterval(updateDailyChart, 60000); // 1분마다 시간별 차트 갱신
+    setInterval(updateAnalysisChart, 60000);
 });
