@@ -5,6 +5,7 @@
     <title>🌤️ 실시간 날씨 확인</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="/static/script.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -13,6 +14,17 @@
         <button onclick="saveLocation()">💾 내 위치 저장하기</button><br><br>
         <button onclick="loadSavedLocation()">📂 저장된 위치 날씨 보기</button>
         <div id="weather-result" class="card">버튼을 눌러 날씨를 확인하세요.</div>
+        
+        <!-- 센서 데이터 섹션 추가 -->
+        <div class="sensor-section">
+            <h2>☀️ 조도 센서 데이터</h2>
+            <button onclick="fetchSensorData()">📊 센서 데이터 새로고침</button>
+            <div class="chart-container">
+                <canvas id="sensorChart"></canvas>
+            </div>
+            <div id="sensor-info" class="card">센서 데이터를 불러오는 중...</div>
+        </div>
+        
         <div id="대충" class="card">웹사이트에 식물이 햇빛에 반응하듯, <br>디지털 시민은 디지털 환경에서 적절히 반응합니다. </div>
     </div>
 </body>
