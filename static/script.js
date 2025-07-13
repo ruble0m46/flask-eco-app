@@ -171,6 +171,73 @@ function updateSensorInfo(data) {
     `;
 }
 
+//선그래프
+function drawExampleDailySensorGraph() {
+    const ctx = document.getElementById('dailySensorChart').getContext('2d');
+
+    const labels = ['06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
+    const sensor1Data = [200, 400, 600, 500, 300, 100];
+    const sensor2Data = [100, 300, 500, 400, 200, 50];
+    const sensor3Data = [150, 350, 550, 450, 250, 75];
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '센서 1',
+                    data: sensor1Data,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: '센서 2',
+                    data: sensor2Data,
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    fill: false,
+                    tension: 0.3
+                },
+                {
+                    label: '센서 3',
+                    data: sensor3Data,
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
+                    fill: false,
+                    tension: 0.3
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1023,
+                    title: {
+                        display: true,
+                        text: '조도 값'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: '일별 조도 센서 데이터 (예시)'
+                },
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+    });
+}
+
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
     initChart();
