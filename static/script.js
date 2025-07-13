@@ -26,7 +26,7 @@ function fetchWeather(lat, lon) {
         const wind = data.wind.speed;
        const sunsetUnix = data.sys?.sunset;  
     let sunsetStr = '정보 없음';
-    }
+    
 
     if (sunsetUnix) {
         const sunsetDate = new Date(sunsetUnix * 1000);
