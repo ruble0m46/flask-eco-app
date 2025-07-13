@@ -1,16 +1,12 @@
 from flask import Flask, request, jsonify, render_template
 import requests
+from collections import deque
 
 app = Flask(__name__)
-API_KEY = 'f8af007bb8d199bd6612f11a4fc70e6b'  # 너의 OpenWeatherMap API 키
+API_KEY = 'f8af007bb8d199bd6612f11a4fc70e6b'  # OpenWeatherMap API 키
 
-# 센서 데이터 저장 변수
-sensor_data = {
-    'sensor1': 0,
-    'sensor2': 0,
-    'sensor3': 0,
-    'timestamp': 0
-}
+# 최대 60개 데이터 저장 (1시간치, 1분 단위라 가정)
+sensor_data_history = deque(maxlen=60)
 
 @app.route('/')
 def home():
@@ -25,26 +21,25 @@ def get_weather():
     res = requests.get(url)
     return jsonify(res.json())
 
-# 센서 데이터 수신 API
+# 센서 데이터 수신 API (POST)
 @app.route('/api/sensor-data', methods=['POST'])
 def receive_sensor_data():
-    global sensor_data
     data = request.get_json()
-    
-    sensor_data = {
-        'sensor1': data.get('sensor1', 0),
-        'sensor2': data.get('sensor2', 0),
-        'sensor3': data.get('sensor3', 0),
-        'timestamp': data.get('timestamp', 0)
-    }
-    
-    print(f"받은 센서 데이터: {sensor_data}")
-    return jsonify({'success': True})
+    if not data:
+        return jsonify({'error': 'No data received'}), 400
 
-# 웹사이트에서 센서 데이터 요청 API
-@app.route('/api/sensor-data', methods=['GET'])
-def get_sensor_data():
-    return jsonify(sensor_data)
+    if all(k in data for k in ['sensor1', 'sensor2', 'sensor3', 'timestamp']):
+        sensor_data_history.append(data)
+        print(f"새 센서 데이터 저장: {data}")
+        return jsonify({'success': True}), 200
+    else:
+        return jsonify({'error': 'Invalid data format'}), 400
+
+# 센서 데이터 히스토리 요청 API (GET)
+@app.route('/api/sensor-history', methods=['GET'])
+def get_sensor_history():
+    # 리스트로 변환 후 반환
+    return jsonify(list(sensor_data_history))
 
 if __name__ == '__main__':
     import os
