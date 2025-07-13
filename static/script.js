@@ -1,3 +1,4 @@
+// 기존 날씨 관련 함수들
 function getLocation() {
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(sendCoordinates, showError);
@@ -29,38 +30,6 @@ function fetchWeather(lat, lon) {
             <p>🌡️ 온도: ${temp}°C (체감 ${feels}°C)</p>
             <p>💧 습도: ${humidity}%</p>
             <p>🌬️ 바람: ${wind} m/s</p>
-            <p>🌬️ 일몰() {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(sendCoordinates, showError);
-    } else {
-        showError({ message: "이 브라우저는 위치 서비스를 지원하지 않습니다." });
-    }
-}
-
-function sendCoordinates(position) {
-    fetchWeather(position.coords.latitude, position.coords.longitude);
-}
-
-function fetchWeather(lat, lon) {
-    fetch('/get_weather', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat: lat, lon: lon })
-    })
-    .then(res => res.json())
-    .then(data => {
-        const weather = data.weather[0].description;
-        const temp = data.main.temp;
-        const feels = data.main.feels_like;
-        const humidity = data.main.humidity;
-        const wind = data.wind.speed;
-
-        document.getElementById("weather-result").innerHTML = `
-            <p>☁️ 상태: ${weather}</p>
-            <p>🌡️ 온도: ${temp}°C (체감 ${feels}°C)</p>
-            <p>💧 습도: ${humidity}%</p>
-            <p>🌬️ 바람: ${wind} m/s</p>
-            <p>🌇 일몰: ${sunsetStr}</p>
         `;
     })
     .catch(() => {
@@ -98,31 +67,106 @@ function showError(error) {
         `🚫 위치 정보를 가져올 수 없습니다.\n${error.message}`;
 }
 
+// 센서 데이터 관련 함수들
+let sensorChart = null;
 
-
-function fetchAndDisplaySunset(lat, lon) {
-    fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&formatted=0`)
-    .then(res => res.json())
-    .then(sunData => {
-        if (sunData.status === 'OK') {
-            const sunsetUTC = new Date(sunData.results.sunset);
-            const sunsetLocal = new Date(sunsetUTC.getTime() + (9 * 60 * 60 * 1000)); // KST 변환
-            const sunsetStr = sunsetLocal.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-            
-            const existingSunset = document.getElementById('sunset-time');
-            if (existingSunset) {
-                existingSunset.innerText = `🌇 일몰 시간: ${sunsetStr}`;
-            } else {
-                const sunsetDiv = document.createElement('p');
-                sunsetDiv.id = "sunset-time";
-                sunsetDiv.innerText = `🌇 일몰 시간: ${sunsetStr}`;
-                document.getElementById("weather-result").appendChild(sunsetDiv);
+function initChart() {
+    const ctx = document.getElementById('sensorChart').getContext('2d');
+    sensorChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['센서 1', '센서 2', '센서 3'],
+            datasets: [{
+                label: '조도 센서 값',
+                data: [0, 0, 0],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 206, 86, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)'
+                ],
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1023,
+                    title: {
+                        display: true,
+                        text: '조도 값'
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: '실시간 조도 센서 데이터'
+                }
             }
-        } else {
-            console.error('일몰 시간 정보를 불러오지 못했습니다.');
         }
-    })
-    .catch(() => {
-        console.error('일몰 시간 API 호출 실패');
     });
 }
+
+function fetchSensorData() {
+    // Render 배포 URL 동적 감지
+    const baseUrl = window.location.origin;
+    
+    fetch(`${baseUrl}/api/sensor-data`)
+        .then(response => response.json())
+        .then(data => {
+            updateChart(data);
+            updateSensorInfo(data);
+        })
+        .catch(error => {
+            console.error('센서 데이터를 불러오는데 실패했습니다:', error);
+            document.getElementById("sensor-info").innerHTML = 
+                '<p style="color: red;">❌ 센서 데이터를 불러올 수 없습니다.</p>';
+        });
+}
+
+function updateChart(data) {
+    if (sensorChart) {
+        sensorChart.data.datasets[0].data = [
+            data.sensor1,
+            data.sensor2,
+            data.sensor3
+        ];
+        sensorChart.update();
+    }
+}
+
+function updateSensorInfo(data) {
+    const timestamp = new Date(data.timestamp).toLocaleString('ko-KR');
+    const maxSensor = Math.max(data.sensor1, data.sensor2, data.sensor3);
+    let brightestSensor = '';
+    
+    if (data.sensor1 === maxSensor) brightestSensor = '센서 1';
+    else if (data.sensor2 === maxSensor) brightestSensor = '센서 2';
+    else brightestSensor = '센서 3';
+    
+    document.getElementById("sensor-info").innerHTML = `
+        <p><strong>📊 센서 데이터 (5분 평균)</strong></p>
+        <div class="sensor-value">센서 1: ${data.sensor1}</div>
+        <div class="sensor-value">센서 2: ${data.sensor2}</div>
+        <div class="sensor-value">센서 3: ${data.sensor3}</div>
+        <p><strong>🌞 가장 밝은 센서:</strong> ${brightestSensor} (${maxSensor})</p>
+        <p><strong>🕐 마지막 업데이트:</strong> ${timestamp}</p>
+    `;
+}
+
+// 페이지 로드 시 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    initChart();
+    fetchSensorData();
+    
+    // 30초마다 자동으로 센서 데이터 갱신
+    setInterval(fetchSensorData, 30000);
+});
