@@ -15,6 +15,15 @@
         <button onclick="loadSavedLocation()">📂 저장된 위치 날씨 보기</button>
         <div id="weather-result" class="card">버튼을 눌러 날씨를 확인하세요.</div>
 
+         <div class="sensor-section">
+            <h2>☀️ 조도 센서 데이터</h2>
+            <button onclick="fetchSensorData()">📊 센서 데이터 새로고침</button>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="sensorChart"></canvas>
+            </div>
+            <div id="sensor-info" class="card">센서 데이터를 불러오는 중...</div>
+        </div>
+
         <div class="sensor-section">
             <h2>📈 시간별 센서 데이터</h2>
             <div class="chart-container" style="height: 300px;">
