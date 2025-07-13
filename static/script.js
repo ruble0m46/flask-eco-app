@@ -31,7 +31,6 @@ function fetchWeather(lat, lon) {
     if (sunsetUnix) {
         const sunsetDate = new Date(sunsetUnix * 1000);
         sunsetStr = sunsetDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-        showAnalysisAtSunset(sunsetUnix);
     }
 
         document.getElementById("weather-result").innerHTML = `
@@ -260,7 +259,6 @@ function fetchAndShowAnalysis() {
                     <li>센서 2 평균: ${avg2}</li>
                     <li>센서 3 평균: ${avg3}</li>
                     <li>🌞 가장 밝은 센서: ${brightest}</li>
-                    <li>💡 평균 조도 200 이하이면 실내 조명 권장</li>
                 </ul>
             `;
 
