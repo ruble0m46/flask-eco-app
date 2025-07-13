@@ -65,3 +65,33 @@ function showError(error) {
     document.getElementById("weather-result").innerText =
         `🚫 위치 정보를 가져올 수 없습니다.\n${error.message}`;
 }
+
+
+
+function fetchAndDisplaySunset(lat, lon) {
+    fetch(`https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&formatted=0`)
+    .then(res => res.json())
+    .then(sunData => {
+        if (sunData.status === 'OK') {
+            const sunsetUTC = new Date(sunData.results.sunset);
+            const sunsetLocal = new Date(sunsetUTC.getTime() + (9 * 60 * 60 * 1000)); // KST 변환
+            const sunsetStr = sunsetLocal.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+            
+            // 기존 날씨 결과 아래에 일몰 시간 추가 표시
+            const existingSunset = document.getElementById('sunset-time');
+            if (existingSunset) {
+                existingSunset.innerText = `🌇 일몰 시간: ${sunsetStr}`;
+            } else {
+                const sunsetDiv = document.createElement('p');
+                sunsetDiv.id = "sunset-time";
+                sunsetDiv.innerText = `🌇 일몰 시간: ${sunsetStr}`;
+                document.getElementById("weather-result").appendChild(sunsetDiv);
+            }
+        } else {
+            console.error('일몰 시간 정보를 불러오지 못했습니다.');
+        }
+    })
+    .catch(() => {
+        console.error('일몰 시간 API 호출 실패');
+    });
+}
