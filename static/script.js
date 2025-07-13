@@ -24,8 +24,14 @@ function fetchWeather(lat, lon) {
         const feels = data.main.feels_like;
         const humidity = data.main.humidity;
         const wind = data.wind.speed;
+       const sunsetUnix = data.sys?.sunset;  
+    let sunsetStr = '정보 없음';
+    }
+
+    if (sunsetUnix) {
         const sunsetDate = new Date(sunsetUnix * 1000);
-        const sunsetStr = sunsetDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        sunsetStr = sunsetDate.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    }
 
         document.getElementById("weather-result").innerHTML = `
             <p>☁️ 상태: ${weather}</p>
