@@ -76,8 +76,9 @@ function showError(error) {
         `🚫 위치 정보를 가져올 수 없습니다.\n${error.message}`;
 }
 
-// 센서 데이터 관련 함수들
+// 센서 차트 변수
 let sensorChart = null;
+let dailyChart = null;
 
 function initChart() {
     const ctx = document.getElementById('sensorChart').getContext('2d');
@@ -108,46 +109,34 @@ function initChart() {
                 y: {
                     beginAtZero: true,
                     max: 1023,
-                    title: {
-                        display: true,
-                        text: '조도 값'
-                    }
+                    title: { display: true, text: '조도 값' }
                 }
             },
             plugins: {
-                title: {
-                    display: true,
-                    text: '실시간 조도 센서 데이터'
-                }
+                title: { display: true, text: '실시간 조도 센서 데이터' }
             }
         }
     });
 }
 
-function fetchSensorData() {
-    // Render 배포 URL 동적 감지
-    const baseUrl = window.location.origin;
-    
-    fetch(`${baseUrl}/api/sensor-data`)
-        .then(response => response.json())
-        .then(data => {
-            updateChart(data);
-            updateSensorInfo(data);
-        })
-        .catch(error => {
-            console.error('센서 데이터를 불러오는데 실패했습니다:', error);
-            document.getElementById("sensor-info").innerHTML = 
-                '<p style="color: red;">❌ 센서 데이터를 불러올 수 없습니다.</p>';
-        });
+async function fetchSensorData() {
+    try {
+        const baseUrl = window.location.origin;
+        const res = await fetch(`${baseUrl}/api/sensor-data`);
+        if (!res.ok) throw new Error('센서 데이터 불러오기 실패');
+        const data = await res.json();
+
+        updateChart(data);
+        updateSensorInfo(data);
+    } catch (error) {
+        console.error(error);
+        document.getElementById("sensor-info").innerHTML = '<p style="color:red;">❌ 센서 데이터를 불러올 수 없습니다.</p>';
+    }
 }
 
 function updateChart(data) {
     if (sensorChart) {
-        sensorChart.data.datasets[0].data = [
-            data.sensor1,
-            data.sensor2,
-            data.sensor3
-        ];
+        sensorChart.data.datasets[0].data = [data.sensor1, data.sensor2, data.sensor3];
         sensorChart.update();
     }
 }
@@ -156,94 +145,96 @@ function updateSensorInfo(data) {
     const timestamp = new Date(data.timestamp).toLocaleString('ko-KR');
     const maxSensor = Math.max(data.sensor1, data.sensor2, data.sensor3);
     let brightestSensor = '';
-    
     if (data.sensor1 === maxSensor) brightestSensor = '센서 1';
     else if (data.sensor2 === maxSensor) brightestSensor = '센서 2';
     else brightestSensor = '센서 3';
-    
+
     document.getElementById("sensor-info").innerHTML = `
-        <p><strong>📊 센서 데이터 (5분 평균)</strong></p>
-        <div class="sensor-value">센서 1: ${data.sensor1}</div>
-        <div class="sensor-value">센서 2: ${data.sensor2}</div>
-        <div class="sensor-value">센서 3: ${data.sensor3}</div>
+        <p><strong>📊 센서 데이터 (실시간)</strong></p>
+        <div>센서 1: ${data.sensor1}</div>
+        <div>센서 2: ${data.sensor2}</div>
+        <div>센서 3: ${data.sensor3}</div>
         <p><strong>🌞 가장 밝은 센서:</strong> ${brightestSensor} (${maxSensor})</p>
         <p><strong>🕐 마지막 업데이트:</strong> ${timestamp}</p>
     `;
 }
 
-//선그래프
-function drawExampleDailySensorGraph() {
+async function updateDailyChart() {
     const ctx = document.getElementById('dailySensorChart').getContext('2d');
+    try {
+        const res = await fetch('/api/sensor-history');
+        if (!res.ok) throw new Error('시간별 데이터 불러오기 실패');
+        const data = await res.json();
 
-    const labels = ['06:00', '09:00', '12:00', '15:00', '18:00', '21:00'];
-    const sensor1Data = [200, 400, 600, 500, 300, 100];
-    const sensor2Data = [100, 300, 500, 400, 200, 50];
-    const sensor3Data = [150, 350, 550, 450, 250, 75];
+        if (!data.length) {
+            if (dailyChart) dailyChart.destroy();
+            document.getElementById('sensor-info').innerText = '저장된 센서 데이터가 없습니다.';
+            return;
+        } else {
+            document.getElementById('sensor-info').innerText = '';
+        }
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: '센서 1',
-                    data: sensor1Data,
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    fill: false,
-                    tension: 0.3
+        const labels = data.map(d => {
+            const dt = new Date(d.timestamp);
+            return dt.getHours().toString().padStart(2, '0') + ':' + dt.getMinutes().toString().padStart(2, '0');
+        });
+        const sensor1Data = data.map(d => d.sensor1);
+        const sensor2Data = data.map(d => d.sensor2);
+        const sensor3Data = data.map(d => d.sensor3);
+
+        if (dailyChart) {
+            dailyChart.data.labels = labels;
+            dailyChart.data.datasets[0].data = sensor1Data;
+            dailyChart.data.datasets[1].data = sensor2Data;
+            dailyChart.data.datasets[2].data = sensor3Data;
+            dailyChart.update();
+        } else {
+            dailyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '센서 1',
+                            backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                            data: sensor1Data
+                        },
+                        {
+                            label: '센서 2',
+                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                            data: sensor2Data
+                        },
+                        {
+                            label: '센서 3',
+                            backgroundColor: 'rgba(255, 206, 86, 0.7)',
+                            data: sensor3Data
+                        }
+                    ]
                 },
-                {
-                    label: '센서 2',
-                    data: sensor2Data,
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    fill: false,
-                    tension: 0.3
-                },
-                {
-                    label: '센서 3',
-                    data: sensor3Data,
-                    borderColor: 'rgba(255, 206, 86, 1)',
-                    backgroundColor: 'rgba(255, 206, 86, 0.2)',
-                    fill: false,
-                    tension: 0.3
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 1023,
-                    title: {
-                        display: true,
-                        text: '조도 값'
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { stacked: false },
+                        y: { beginAtZero: true, max: 1023 }
+                    },
+                    plugins: {
+                        title: { display: true, text: '시간별 조도 센서 평균 값' }
                     }
                 }
-            },
-            plugins: {
-                title: {
-                    display: true,
-                    text: '시간별 조도 센서 데이터'
-                },
-                legend: {
-                    display: true,
-                    position: 'top'
-                }
-            }
+            });
         }
-    });
+    } catch (error) {
+        console.error(error);
+        document.getElementById('sensor-info').innerText = '시간별 센서 데이터를 불러올 수 없습니다.';
+    }
 }
 
-// 페이지 로드 시 초기화
-document.addEventListener('DOMContentLoaded', function() {
+// 초기화 및 반복 갱신
+document.addEventListener('DOMContentLoaded', function () {
     initChart();
     fetchSensorData();
-    drawExampleDailySensorGraph();
-    
-    // 30초마다 자동으로 센서 데이터 갱신
-    setInterval(fetchSensorData, 30000);
+    updateDailyChart();
+
+    setInterval(fetchSensorData, 30000);  // 30초마다 실시간 데이터 갱신
+    setInterval(updateDailyChart, 60000); // 1분마다 시간별 차트 갱신
 });
